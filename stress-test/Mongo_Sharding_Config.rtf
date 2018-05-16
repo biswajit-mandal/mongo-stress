@@ -1,0 +1,236 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1504\cocoasubrtf830
+{\fonttbl\f0\fmodern\fcharset0 Courier;}
+{\colortbl;\red255\green255\blue255;\red59\green35\blue34;\red215\green211\blue183;\red50\green0\blue202;
+}
+{\*\expandedcolortbl;;\csgenericrgb\c23317\c13541\c13291;\cssrgb\c87500\c85798\c76563;\cssrgb\c26119\c14096\c83119;
+}
+{\info
+{\author `}
+{\*\company ` 0564PO7LR41Qq}
+{\*\copyright Q}}\margl1440\margr1440\vieww28600\viewh15240\viewkind0
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf2 \cb3 \CocoaLigature0 Config Replica Sets\
+===================\
+5b2s37 10.87.68.74 \
+mongod --configsvr --replSet configReplica --dbpath /mongodb --bind_ip localhost,10.87.68.74 --port 27019\
+ \
+5b2s39 10.87.68.75\
+mongod --configsvr --replSet configReplica --dbpath /mongodb --bind_ip localhost,10.87.68.75 --port 27019\
+\
+5b2s41 10.87.68.76\
+mongod --configsvr --replSet configReplica --dbpath /mongodb --bind_ip localhost,10.87.68.76 --port 27019\
+\
+Initiate Replica Set\
+====================\
+mongo --port 27019\
+\
+rs.initiate(\{_id: "configReplica", configsvr: true, members: [\{_id: 0, host: "10.87.68.74:27019"\}, \{_id: 1, host: "10.87.68.75:27019"\}, \{_id: 2, host: "10.87.68.76:27019"\}]\})\
+\{\
+	"ok" : 1,\
+	"operationTime" : Timestamp(1525161608, 1),\
+	"$gleStats" : \{\
+		"lastOpTime" : Timestamp(1525161608, 1),\
+		"electionId" : ObjectId("000000000000000000000000")\
+	\},\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525161608, 1),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\}\
+\}\
+configReplica:SECONDARY> \
+configReplica:PRIMARY>\
+\
+Shard Replica Sets\
+==================\
+mongod --shardsvr --replSet shardReplica --dbpath /mongodb-replica --bind_ip localhost,10.87.68.74 --port 27018\
+\
+mongod --shardsvr --replSet shardReplica --dbpath /mongodb-replica --bind_ip localhost,10.87.68.75 --port 27018\
+\
+mongod --shardsvr --replSet shardReplica --dbpath /mongodb-replica --bind_ip localhost,10.87.68.76 --port 27018\
+\
+\
+Initiate Replica Set\
+====================\
+mongo --port 27018\
+\
+rs.initiate(\{_id: "shardReplica", members: [\{ _id : 0, host : "10.87.68.74:27018"\}, \{_id : 1, host : "10.87.68.75:27018"\}, \{_id : 2, host : "10.87.68.76:27018"\}]\})\
+\{ "ok" : 1 \}\
+shardReplica:SECONDARY> \
+\
+\
+Start Mongos/Query Router\
+=========================\
+mongos --configdb configReplica/10.87.68.74:27019,10.87.68.75:27019,10.87.68.76:27019 --bind_ip localhost,10.87.68.73 --port 27017\
+\
+mongo --port 27017\
+\
+Enable Sharing\
+==============\
+sh.addShard("shardReplica/10.87.68.74:27018")\
+\{\
+	"shardAdded" : "shardReplica",\
+	"ok" : 1,\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525162779, 7),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\},\
+	"operationTime" : Timestamp(1525162779, 7)\
+\}\
+sh.addShard("shardReplica/10.87.68.75:27018")\
+\{\
+	"shardAdded" : "shardReplica",\
+	"ok" : 1,\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525162799, 1),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\},\
+	"operationTime" : Timestamp(1525162799, 1)\
+\}\
+sh.addShard("shardReplica/10.87.68.76:27018")\
+\{\
+	"shardAdded" : "shardReplica",\
+	"ok" : 1,\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525162801, 1),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\},\
+	"operationTime" : Timestamp(1525162801, 1)\
+\}\
+sh.enableSharding("flows_db")\
+\{\
+	"ok" : 1,\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525162820, 7),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\},\
+	"operationTime" : Timestamp(1525162820, 7)\
+\}\
+sh.shardCollection("flows_db.StatTable.EndpointSecurityStats.eps.server", \{"timestamp": "hashed"\})\
+\{\
+	"collectionsharded" : "flows_db.StatTable.EndpointSecurityStats.eps.server",\
+	"collectionUUID" : UUID("d58d5067-9a85-468e-adb4-bdf5ca5bb32c"),\
+	"ok" : 1,\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525170546, 21),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\},\
+	"operationTime" : Timestamp(1525170546, 15)\
+\}\
+sh.shardCollection("flows_db.StatTable.EndpointSecurityStats.eps.client", \{"timestamp": "hashed"\})\
+\{\
+	"collectionsharded" : "flows_db.StatTable.EndpointSecurityStats.eps.client",\
+	"collectionUUID" : UUID("dcb4413b-e99c-4ce0-b4e8-9e10a4905185"),\
+	"ok" : 1,\
+	"$clusterTime" : \{\
+		"clusterTime" : Timestamp(1525170559, 19),\
+		"signature" : \{\
+			"hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+			"keyId" : NumberLong(0)\
+		\}\
+	\},\
+	"operationTime" : Timestamp(1525170559, 15)\
+\}\
+\
+db.StatTable.EndpointSecurityStats.eps.server.createIndex(\{"__key": 1\})\
+\{\
+        "raw" : \{\
+                "shardReplica/10.87.68.74:27018,10.87.68.75:27018,10.87.68.76:27018" : \{\
+                        "createdCollectionAutomatically" : false,\
+                        "numIndexesBefore" : 2,\
+                        "numIndexesAfter" : 3,\
+                        "ok" : 1\
+                \}\
+        \},\
+        "ok" : 1,\
+        "$clusterTime" : \{\
+                "clusterTime" : Timestamp(1525446648, 2),\
+                "signature" : \{\
+                        "hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+                        "keyId" : NumberLong(0)\
+                \}\
+        \},\
+        "operationTime" : Timestamp(1525446648, 2)\
+\}\
+\
+db.StatTable.EndpointSecurityStats.eps.client.createIndex(\{"__key": 1\})\
+\{\
+        "raw" : \{bxhh\
+                "shardReplica/10.87.68.74:27018,10.87.68.75:27018,10.87.68.76:27018" : \{\
+                        "createdCollectionAutomatically" : false,\
+                        "numIndexesBefore" : 2,\
+                        "numIndexesAfter" : 3,\
+                        "ok" : 1\
+                \}\
+        \},\
+        "ok" : 1,\
+        "$clusterTime" : \{\
+                "clusterTime" : Timestamp(1525446677, 1),\
+                "signature" : \{\
+                        "hash" : BinData(0,"AAAAAAAAAAAAAAAAAAAAAAAAAAA="),\
+                        "keyId" : NumberLong(0)\
+                \}\
+        \},\
+        "operationTime" : Timestamp(1525446677, 1)\
+\}\
+mongos>\
+\
+\
+\
+\
+sh.shardCollection("flows_db.StatTable.EndpointSecurityStats.eps.client", \{"t2": "hashed"\})\
+sh.shardCollection("flows_db.StatTable.EndpointSecurityStats.eps.server", \{"t2": "hashed"\})\
+sh.shardCollection("flows_db.StatTable.UveVirtualNetworkAgent.vn_stats", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.UveVMInterfaceAgent.if_stats", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.ComputeCpuState.cpu_info", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.NodeStatus.process_mem_cpu_usage", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.SandeshMessageStat.msg_info", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.VncApiStatsLog.api_stats", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.\cf4 \cb3 StatTable.PeerStatsData.tx_update_stats\cf2 \cb3 ", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.\cf4 \cb3 StatTable.PeerStatsData.rx_update_stats\cf2 \cb3 ", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.CollectorDbStats.table_info", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.QueryPerfInfo.query_stats", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.CollectorDbStats.cql_stats", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.CollectorDbStats.stats_info", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.PRouterEntry.ifStats", \{"t2": "hashed"\})\
+mongos> sh.shardCollection("flows_db.StatTable.AnalyticsApiStats.api_stats", \{"t2": "hashed"\})\
+\
+\
+\
+db.StatTable.EndpointSecurityStats.eps.client.createIndex(\{"timestamp": 1\}, \{expireAfterSeconds: 5\})\
+\
+db.StatTable.EndpointSecurityStats.eps.client.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.EndpointSecurityStats.eps.server.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.UveVirtualNetworkAgent.vn_stats.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.UveVMInterfaceAgent.if_stats.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.ComputeCpuState.cpu_info.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.NodeStatus.process_mem_cpu_usage.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.SandeshMessageStat.msg_info.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.StatTable.VncApiStatsLog.api_stats.createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.\cf4 \cb3 StatTable.PeerStatsData.tx_update_stats.\cf2 \cb3 createIndex(\{"timestamp": 1, "tableindex": 1\})\
+db.\cf4 \cb3 StatTable.StatTable.PeerStatsData.rx_update_stats.\cf2 \cb3 createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+\cf2 \cb3 db.\cf4 \cb3 StatTable.\cf2 \cb3 StatTable.CollectorDbStats.table_info\cf4 \cb3 .\cf2 \cb3 createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+\cf2 \cb3 db.\cf4 \cb3 StatTable.\cf2 \cb3 StatTable.QueryPerfInfo.query_stats.createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+\cf2 \cb3 db.\cf4 \cb3 StatTable.\cf2 \cb3 StatTable.CollectorDbStats.cql_stats.createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+\cf2 \cb3 db.\cf4 \cb3 StatTable.\cf2 \cb3 StatTable.CollectorDbStats.stats_info.createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+\cf2 \cb3 db.\cf4 \cb3 StatTable.\cf2 \cb3 StatTable.PRouterEntry.ifStats.createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+\cf2 \cb3 db.\cf4 \cb3 StatTable.\cf2 \cb3 StatTable.AnalyticsApiStats.api_stats.createIndex(\{"timestamp": 1, "tableindex": 1\})\cf4 \cb3 \
+}
